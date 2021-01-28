@@ -17,7 +17,8 @@
 // [START admin_sdk_directory_quickstart]
 const fs = require('fs');
 const readline = require('readline');
-const {google} = require('googleapis');
+const { google } = require('googleapis');
+const moment = require('moment')
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/admin.directory.userschema'];
@@ -43,9 +44,9 @@ fs.readFile('credentials.json', (err, content) => {
  * @param {function} callback The callback to call with the authorized client.
  */
 function authorize(credentials, callback) {
-  const {client_secret, client_id, redirect_uris} = credentials.installed;
+  const { client_secret, client_id, redirect_uris } = credentials.installed;
   const oauth2Client = new google.auth.OAuth2(
-      client_id, client_secret, redirect_uris[0]);
+    client_id, client_secret, redirect_uris[0]);
 
   // Check if we have previously stored a token.
   fs.readFile(TOKEN_PATH, (err, token) => {
@@ -104,24 +105,18 @@ function storeToken(token) {
 
 
 function listUsers(auth) {
-  const service = google.admin({version: 'directory_v1', auth}); 
+  const service = google.admin({ version: 'directory_v1', auth });
   service.users.list({
     customer: 'my_customer',
     maxResults: 140,
-    orderBy: 'email'
+    orderBy: 'email',
+    projection: 'full'
   }, (err, res) => {
     if (err) return console.error('The API returned an error:', err.message);
     console.log(res.data)
     const users = res.data.users;
-    if (users.length) {
-      users.forEach((user) => {
-        if(user.primaryEmail === 'vanessa.conceicao@somospi.com.br'){
-          console.log(user.customSchemas); //`{Name: ${user.name.fullName}, Email: ${user.primaryEmail} }`
-        }
-      });
-    } else {
-      console.log('No users found.');
-    }
+    let data = JSON.stringify(users);
+    fs.writeFileSync(`users_${moment().format('YYYY-MM-DD')}.json`, data);
   });
 }
 
